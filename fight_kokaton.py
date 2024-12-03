@@ -174,7 +174,8 @@ def main():
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
-    beam = None
+    beam=[]
+    beams = []
     score = Score()
     clock = pg.time.Clock()
     tmr = 0
@@ -183,8 +184,23 @@ def main():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beam = Beam(bird)
+                beams.append(Beam(bird))  # 新しいビームをリストに追加
+
         screen.blit(bg_img, [0, 0])
+
+        for beam in beams[:]:
+            beam.update(screen)
+            if beam.rct is None:
+                beams.remove(beam)
+                continue
+        for bomb in bombs[:]:
+            if beam.rct.colliderect(bomb.rct):  # 衝突判定
+                beams.remove(beam)  # ビームをリストから削除
+                bombs.remove(bomb)  # 爆弾をリストから削除
+                score.increase()  # スコアを加算
+                bird.change_img(6, screen)  # 爆弾撃破時の画像変更
+                break
+
         
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
