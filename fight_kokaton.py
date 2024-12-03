@@ -111,7 +111,7 @@ class Beam:
 
 
 class Bomb:
-    """
+    """"
     爆弾に関するクラス
     """
     def __init__(self, color: tuple[int, int, int], rad: int):
