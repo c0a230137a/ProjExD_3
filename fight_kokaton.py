@@ -168,6 +168,32 @@ class Score:
         screen.blit(self.img, self.rect)
 
 
+class Explosion:
+    """
+    爆弾が打ち落とされた際の爆発エフェクトを表示するクラス
+    """
+    def __init__(self, center: tuple[int, int]):
+        self.images = [
+            pg.image.load("fig/explosion.gif"),
+            pg.transform.flip(pg.image.load("fig/explosion.gif"), True, True)
+        ]
+        self.index = 0
+        self.image = self.images[self.index]
+        self.rect = self.image.get_rect()
+        self.rect.center = center
+        self.life = 20  # 表示時間（爆発時間）
+    def update(self, screen: pg.Surface):
+        """
+        爆発エフェクトを更新し、画面に表示する
+        引数 screen：画面Surface
+        """
+        self.life -= 1
+        if self.life > 0:
+            self.index = (self.index + 1) % len(self.images)
+            self.image = self.images[self.index]
+            screen.blit(self.image, self.rect)
+            return True
+        return False
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
@@ -175,6 +201,7 @@ def main():
     bird = Bird((300, 200))
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     beams = []  # Beamクラスのインスタンスを複数扱うための空のリスト
+    explosions = []  # Explosionクラスのインスタンスを複数扱うためのリスト
     score = Score()
     clock = pg.time.Clock()
     tmr = 0
@@ -185,7 +212,7 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.append(Beam(bird))  # スペースキー押下でBeamインスタンス生成，リストにappend
         screen.blit(bg_img, [0, 0])
-        
+
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
                 bird.change_img(8, screen)
@@ -204,18 +231,21 @@ def main():
                         bombs[i] = None
                         bird.change_img(6, screen)
                         score.increase()
+                        explosions.append(Explosion(bomb.rct.center))
                         pg.display.update()
-        
+
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
 
         bombs = [bomb for bomb in bombs if bomb is not None]
         for bomb in bombs:
             bomb.update(screen)
-        
+
         beams = [beam for beam in beams if beam is not None and check_bound(beam.rct) == (True, True)]  # 画面の範囲外に出たらリストから削除
         for beam in beams:
             beam.update(screen)
+
+        explosions = [explosion for explosion in explosions if explosion.update(screen)]  # 爆発エフェクトの更新
         
         score.update(screen)
         pg.display.update()
@@ -227,4 +257,3 @@ if __name__ == "__main__":
     pg.init()
     main()
     pg.quit()
-    sys.exit()
