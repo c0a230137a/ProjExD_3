@@ -111,7 +111,7 @@ class Beam:
 
 
 class Bomb:
-    """"
+    """
     爆弾に関するクラス
     """
     def __init__(self, color: tuple[int, int, int], rad: int):
@@ -141,16 +141,41 @@ class Bomb:
         screen.blit(self.img, self.rct)
 
 
+class Score:
+    """
+    打ち落とした爆弾の数を表示するスコアクラス
+    """
+    def __init__(self):
+        self.score = 0
+        self.fonto = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
+        self.color = (0, 0, 255)
+        self.img = self.fonto.render(f"Score: {self.score}", 0, self.color)
+        self.rect = self.img.get_rect()
+        self.rect.center = (100, HEIGHT - 50)
+
+    def increase(self):
+        """
+        スコアを1増やす
+        """
+        self.score += 1
+
+    def update(self, screen: pg.Surface):
+        """
+        現在のスコアを表示させる文字列Surfaceの生成とスクリーンにblit
+        引数 screen：画面Surface
+        """
+        self.img = self.fonto.render(f"Score: {self.score}", 0, self.color)
+        screen.blit(self.img, self.rect)
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
-    bomb = Bomb((255, 0, 0), 10)
-    beam = None  # Beam(bird)  # ビームインスタンス生成
-    # bomb2 = Bomb((0, 0, 255), 20)    
-    # bomb2 = Bomb((0, 0, 255), 20)   
-    bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)] 
+    bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
+    beam = None
+    score = Score()
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -158,43 +183,35 @@ def main():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                # スペースキー押下でBeamクラスのインスタンス生成
-                beam = Beam(bird)            
+                beam = Beam(bird)
         screen.blit(bg_img, [0, 0])
-
-        if bomb is not None:
-            for bomb in bombs:
-                if bird.rct.colliderect(bomb.rct):
-                    # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
-                    bird.change_img(8, screen)
-                    pg.display.update()
-                    time.sleep(1)
-                    return
-
-        if beam is not None:
-            if beam.rct.colliderect(bomb.rct):  # ビームが爆弾を撃ち落としたら
-                beam = None
-                bomb = None
-                bird.change_img(6, screen)
+        
+        for bomb in bombs:
+            if bird.rct.colliderect(bomb.rct):
+                bird.change_img(8, screen)
                 pg.display.update()
+                time.sleep(1)
+                return
+
         for i, bomb in enumerate(bombs):
-            if beam is not None:
-                if beam.rct.colliderect(bomb.rct):  # ビームが爆弾を撃ち落としたら
+            if beam is not None and bomb is not None:
+                if beam.rct.colliderect(bomb.rct):
                     beam = None
                     bombs[i] = None
                     bird.change_img(6, screen)
+                    score.increase()
                     pg.display.update()
-
+        
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        # beam.update(screen)
-        if bomb is not None:
-            bombs = [bomb for bomb in bombs if bomb is not None]  # Noneでないものリスト
+
+        bombs = [bomb for bomb in bombs if bomb is not None]
         for bomb in bombs:
             bomb.update(screen)
         if beam is not None:
             beam.update(screen)
-        # bomb2.update(screen)
+        
+        score.update(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
