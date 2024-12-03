@@ -152,26 +152,26 @@ class Score:
     打ち落とした爆弾の数を表示するスコアクラス
     """
     def __init__(self):
-        self.score = 0
-        self.fonto = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
-        self.color = (0, 0, 255)
-        self.img = self.fonto.render(f"Score: {self.score}", 0, self.color)
-        self.rect = self.img.get_rect()
-        self.rect.center = (100, HEIGHT - 50)
+        self.score = 0  # スコアの初期値を0に設定
+        self.fonto = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)  # スコア表示用のフォントを設定
+        self.color = (0, 0, 255)  # スコア文字の色（青色）
+        self.img = self.fonto.render(f"Score: {self.score}", 0, self.color)  # 初期スコアの文字列Surfaceを生成
+        self.rect = self.img.get_rect()  # 文字列SurfaceのRectオブジェクトを取得
+        self.rect.center = (100, HEIGHT - 50)  # Rectオブジェクトの中心を画面左下に設定（x=100, y=高さの下から50ピクセル）
 
     def increase(self):
         """
         スコアを1増やす
         """
-        self.score += 1
+        self.score += 1 # スコアを1加算
 
     def update(self, screen: pg.Surface):
         """
         現在のスコアを表示させる文字列Surfaceの生成とスクリーンにblit
         引数 screen：画面Surface
         """
-        self.img = self.fonto.render(f"Score: {self.score}", 0, self.color)
-        screen.blit(self.img, self.rect)
+        self.img = self.fonto.render(f"Score: {self.score}", 0, self.color)  # 現在のスコアを描画する文字列Surfaceを生成
+        screen.blit(self.img, self.rect)   # 文字列Surfaceをスクリーンに描画
 
 
 class Explosion:
@@ -183,24 +183,24 @@ class Explosion:
             pg.image.load("fig/explosion.gif"),
             pg.transform.flip(pg.image.load("fig/explosion.gif"), True, True)
         ]
-        self.index = 0
-        self.image = self.images[self.index]
-        self.rect = self.image.get_rect()
-        self.rect.center = center
-        self.life = 20  # 表示時間（爆発時間）
+        self.index = 0  # 現在の画像インデックス
+        self.image = self.images[self.index]  # 最初に表示する画像
+        self.rect = self.image.get_rect()  # 爆発画像のRect（位置とサイズ）
+        self.rect.center = center  #爆発の中心位置を設定
+        self.life = 20  # 爆発時間
 
     def update(self, screen: pg.Surface):
         """
         爆発エフェクトを更新し、画面に表示する
         引数 screen：画面Surface
         """
-        self.life -= 1
-        if self.life > 0:
-            self.index = (self.index + 1) % len(self.images)
-            self.image = self.images[self.index]
-            screen.blit(self.image, self.rect)
-            return True
-        return False
+        self.life -= 1  # 爆破時間を1減らす
+        if self.life > 0:  # 爆破時間が残っている場合
+            self.index = (self.index + 1) % len(self.images)  # 画像を切り替え
+            self.image = self.images[self.index]  # 現在の画像を更新
+            screen.blit(self.image, self.rect)  # 画面に画像を描画
+            return True  # 爆発エフェクトはまだ続いている
+        return False  # 爆発エフェクト終了
 
 
 def main():
