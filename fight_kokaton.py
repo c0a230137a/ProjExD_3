@@ -3,6 +3,7 @@ import random
 import sys
 import time
 import pygame as pg
+import math
 
 
 WIDTH = 1100  # ゲームウィンドウの幅
@@ -56,6 +57,7 @@ class Bird:
         self.img = __class__.imgs[(+5, 0)]
         self.rct: pg.Rect = self.img.get_rect()
         self.rct.center = xy
+        self.dire = (+5, 0)  # 初期向きは右
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -82,6 +84,7 @@ class Bird:
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.img = __class__.imgs[tuple(sum_mv)]
+            self.dire = tuple(sum_mv)  # 現在の向きを更新
         screen.blit(self.img, self.rct)
 
 
@@ -89,16 +92,19 @@ class Beam:
     """
     こうかとんが放つビームに関するクラス
     """
-    def __init__(self, bird:"Bird"):
+    def __init__(self, bird: "Bird"):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん（Birdインスタンス）
         """
         self.img = pg.image.load(f"fig/beam.png")
         self.rct = self.img.get_rect()
-        self.rct.centery = bird.rct.centery  # こうかとんの中心縦座標
-        self.rct.left = bird.rct.right  # こうかとんの右座標
-        self.vx, self.vy = +5, 0
+        self.vx, self.vy = bird.dire  # こうかとんの向きに応じた速度ベクトル
+        angle = math.degrees(math.atan2(-self.vy, self.vx))  # 直交座標から極座標の角度に変換
+        self.img = pg.transform.rotozoom(self.img, angle, 1.0)  # ビーム画像を回転
+        self.rct = self.img.get_rect()
+        self.rct.centerx = bird.rct.centerx + bird.rct.width * self.vx // 5
+        self.rct.centery = bird.rct.centery + bird.rct.height * self.vy // 5
 
     def update(self, screen: pg.Surface):
         """
@@ -107,7 +113,7 @@ class Beam:
         """
         if check_bound(self.rct) == (True, True):
             self.rct.move_ip(self.vx, self.vy)
-            screen.blit(self.img, self.rct)    
+            screen.blit(self.img, self.rct)
 
 
 class Bomb:
@@ -182,6 +188,7 @@ class Explosion:
         self.rect = self.image.get_rect()
         self.rect.center = center
         self.life = 20  # 表示時間（爆発時間）
+
     def update(self, screen: pg.Surface):
         """
         爆発エフェクトを更新し、画面に表示する
@@ -194,6 +201,8 @@ class Explosion:
             screen.blit(self.image, self.rect)
             return True
         return False
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
@@ -212,7 +221,7 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.append(Beam(bird))  # スペースキー押下でBeamインスタンス生成，リストにappend
         screen.blit(bg_img, [0, 0])
-
+        
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
                 bird.change_img(8, screen)
@@ -233,18 +242,18 @@ def main():
                         score.increase()
                         explosions.append(Explosion(bomb.rct.center))
                         pg.display.update()
-
+        
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
 
         bombs = [bomb for bomb in bombs if bomb is not None]
         for bomb in bombs:
             bomb.update(screen)
-
+        
         beams = [beam for beam in beams if beam is not None and check_bound(beam.rct) == (True, True)]  # 画面の範囲外に出たらリストから削除
         for beam in beams:
             beam.update(screen)
-
+        
         explosions = [explosion for explosion in explosions if explosion.update(screen)]  # 爆発エフェクトの更新
         
         score.update(screen)
@@ -257,3 +266,4 @@ if __name__ == "__main__":
     pg.init()
     main()
     pg.quit()
+    sys.exit()
